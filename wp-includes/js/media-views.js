@@ -2351,17 +2351,40 @@ AttachmentCompat = View.extend({
 		}
 
 		_.each( this.$el.serializeArray(), function( pair ) {
-			data[ pair.name ] = pair.value;
-		});
-
-		this.controller.trigger( 'attachment:compat:waiting', ['waiting'] );
-		this.model.saveCompat( data ).always( _.bind( this.postSave, this ) );
-	},
-
-	postSave: function() {
-		this.controller.trigger( 'attachment:compat:ready', ['ready'] );
-	}
-});
+		
+		/*
+		 * Start of patch to fix multiple value input fields 
+		 *
+		 */
+			
+			    // if the pair.name is greater than 2 chars and [] is the last two chars 
+				if ( pair.name.length > 2 && '[]' == pair.name.substr( pair.name.length - 2 ) ) { 
+				
+										// defined item as the name minus the [] 
+					                    var item = pair.name.substr( 0, pair.name.length - 2 ); 
+					                 	//if item wasn't passed previously in data
+					                     if ( item in data ) { 
+					                     		  // combine all of the pair.value together to one data[item] comma separated
+					                              var list =  data[ item ] += ',' + pair.value; 
+					                              
+					                              // split the list into a javascript object 
+					                              data[ item ] = list.split(',');
+					                              
+					                     /*    
+					                      * if it is the first time sending for 'item' just add once   
+					                      * storing even single records as an array only for inputs that have name="somename[]" 
+					                      */
+					                          } else { 
+					                                var list = pair.value; 
+					                                data[ item ] = list.split(',');
+					                          } // end  if ( item in data )
+					     
+					     //else if name does not end in []                      
+					    } else { 
+					         // send the value only 
+					         data[ pair.name ] = pair.value; 
+					   } 
+			});
 
 module.exports = AttachmentCompat;
 
